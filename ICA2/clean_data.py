@@ -25,6 +25,7 @@ for i in range(df.shape[0]):
         df.deaths.iloc[i] = 20.0 #Replacing them with 300
 
 df["dateRep"]= pd.to_datetime(df['dateRep'])
+df = df.astype({"year" : "int"})
 
 df = df.sort_values(by='dateRep')
 

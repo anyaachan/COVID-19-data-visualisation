@@ -7,6 +7,10 @@ import dash_mantine_components as dmc
 # Creating dataframe (incorporating data to the app)
 df = pd.read_csv("ICA2/data-cleaned.csv")
 
+#Creating new variables and storing the sum of columns in them. 
+total_cases = df["New cases"].sum()
+total_deaths = df["New deaths"].sum()
+
 # Building our components
 # Selecting a theme and opening the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.LUX])
@@ -16,8 +20,8 @@ my_title = dcc.Markdown(
 # Making graphs components
 # The figure is empty, there is nothing at the beginning
 my_graph = dcc.Graph(figure={})
-my_bar = dcc.Graph(figure=px.histogram(df, x="month_year", y="New cases",
-                   color="continent", title="Cases distribution by continent for each month"))
+my_bar = dcc.Graph(figure=px.histogram(df, x = "Month", y = "New cases",
+                   color = "continent", title = "Cases distribution by continent for each month"))
 
 # Making selection components
 dropdown_cases = dcc.Dropdown(options=["New cases", "New deaths"],
@@ -38,8 +42,23 @@ app.layout = html.Div(children=[
         html.H6(children="Pandemic overview 2020-2022",
                 style={"marginBottom": "30px"}),
     ], style={'textAlign': 'center'}),
+
+    html.Div(children=[
+
+        html.Div(children=[
+            html.H3(children = total_cases, style={'fontWeight': 'bold', 'color': '#00aeef'}),
+            html.Label('Total cases'),
+        ], style={"border": "1px solid #6f6f6f", "border-radius": "13px", "padding": "15px"}),
+
+        html.Div(children=[
+            html.H3(children = total_deaths, style={'fontWeight': 'bold', 'color': '#00aeef'}),
+            html.Label('Total deaths'),
+        ], style={"border": "1px solid #6f6f6f", "border-radius": "13px", "padding": "15px"}),
+
+    ], style = {"paddingBottom": "20px", 'display': 'flex', 'justify-content': 'space-between', 'width': '100%', 'flex-wrap': 'wrap'} ),
     
     html.Div(children=[
+
         html.Div(children=[
             my_graph
         ]),
@@ -49,9 +68,9 @@ app.layout = html.Div(children=[
                 dbc.Col([multi_select], width=8),
                 dbc.Col([dropdown_cases], width=3)
             ], justify="center")
-        ])
-
+            ])
     ], style={"border": "1px solid #6f6f6f", "border-radius": "13px", "padding": "30px", "margin-bottom": "20px"}),
+
     html.Div(children=[
         html.Div(children=[
             my_bar
@@ -59,23 +78,6 @@ app.layout = html.Div(children=[
     ], style={"border": "1px solid", "border-radius": "13px", "padding": "30px"}),
 
 ], style={"padding": "30px"})
-
-# app.layout = dbc.Container([
-#     dbc.Row([
-#         dbc.Col([my_title], width = 6)
-#     ], justify="left"),
-#     dbc.Row([
-#         dbc.Col([my_graph], width = 12)
-#     ], justify="center"),
-#     dbc.Row([
-#         dbc.Col([multi_select], width = 7),
-#         dbc.Col([dropdown_cases], width = 3)
-#     ], justify="center"),
-#     dbc.Row([
-#         dbc.Col([my_bar], width = 11),
-#     ], justify="left"),
-#     ])
-
 
 # Building a callback
 # A callback decorator

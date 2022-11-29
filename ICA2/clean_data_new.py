@@ -11,7 +11,7 @@ df.rename({"new_cases": "New cases", "new_deaths": "New deaths", "location": "Co
 
 df["date"]= pd.to_datetime(df["date"])
 
-df['month_year'] = pd.to_datetime(df['date']).dt.to_period('M')
+df['Month'] = pd.to_datetime(df['date']).dt.to_period('M')
 
 
 

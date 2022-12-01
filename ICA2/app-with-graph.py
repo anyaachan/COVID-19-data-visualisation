@@ -13,11 +13,12 @@ df = pd.read_csv("ICA2/data-cleaned.csv")
 total_cases = df["New cases"].sum()
 total_deaths = df["New deaths"].sum()
 
-# "Converting" to a logarithm scale
-df['cases_color'] = df['New cases'].apply(np.log10)
+# "Converting" cases from linear to a logarithm scale.
+df['cases_color'] = df['New cases'].apply(np.log2)
 max_log = int(df['cases_color'].max())
+
 values = [i for i in range(max_log + 1)] #list comprehension
-ticks = [10**i for i in values]
+ticks = [i for i in values]
 
 # Preparing a map for chloropleth graph
 # Loading json file
@@ -25,13 +26,30 @@ world_path = "ICA2/custom.geo.json"
 with open(world_path) as f:
     geo_world = json.load(f)
 
+# Making conversion list for counties which names in dataset doesn't match with names in json file
+country_conversion_dict = {
+    'United States of America' : 'United States',
+    "S. Sudan" : "South Sudan",
+    "Central African Rep." : "Central African Republic",
+    "Côte d'Ivoire" : "Cote d'Ivoire",
+    "Dem. Rep. Congo" : "Democratic Republic of Congo",
+    "Bosnia and Herz." : "Bosnia and Herzegovina"
+}
+
+#Defining an empty list
 countries_geo = []
 
-# Looping 
+#Creating database with sum of cases and deaths grouped by each month
+df2 = df.groupby(["Country", "Month"])['New cases', "New deaths"].sum()
+df2 = df2.reset_index(drop=False) #Why do we need to reset the index and what does it mean?
+
+# Looping through the countries in json file
 for country in geo_world['features']:
 
     country_name = country['properties']['name'] 
     geometry = country['geometry']
+    country_name = country_conversion_dict[country_name] if country_name in country_conversion_dict.keys() else country_name
+
 
     countries_geo.append({
             'type': 'Feature',
@@ -43,22 +61,25 @@ geo_world_ok = {'type': 'FeatureCollection', 'features': countries_geo}
 # Building our components
 # Selecting a theme and opening the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.LUX])
+
+#Creating a title for the map
 my_title = dcc.Markdown(
     children="# App that analyses COVID-19 situation", )  # Making the title
 
 # Making graphs components
-# The figure is empty, there is nothing at the beginning
+# The figure is empty at the beginning because it is an interactive part of the application. 
 my_graph = dcc.Graph(figure={})
 
 my_bar = dcc.Graph(figure=px.histogram(df, x = "Month", y = "New cases",
                    color = "continent", title = "Cases distribution by continent for each month"))
 
+
 chor = px.choropleth_mapbox(
-        df, geojson = geo_world_ok, 
+        df2, geojson = geo_world_ok, 
         locations = "Country", 
         color='New cases',
-        color_continuous_scale="Viridis",
         animation_frame = "Month",
+        range_color = (0, 7000000),
         mapbox_style='open-street-map',
         zoom=0.5,
         center={'lat': 19, 'lon': 11},
@@ -66,14 +87,15 @@ chor = px.choropleth_mapbox(
     )
 
 chor.update_layout(
+    height = 800,
     coloraxis_colorbar={
         'title':'Confirmed people',
-        'tickvals':values,
-        'ticktext':ticks        
+        'tickvals': [0, 100000, 500000, 1000000, 4000000, 6000000],
+        'ticks': "outside"  
     }
 )
-
 my_chor = dcc.Graph(figure = chor)
+
 # Making selection components
 dropdown_cases = dcc.Dropdown(options=["New cases", "New deaths"],
                               value="New cases",  # Setting the initial value
@@ -140,7 +162,6 @@ app.layout = html.Div(children=[
 # A callback function that should always go after a callback decorator
 def update_graph(cases_input, continents_input):
 
-    # df_filtered = df[df["year"] == int(year_input)]
     mask = df.continent.isin(continents_input)
 
     fig = px.line(df[mask], x="date", 

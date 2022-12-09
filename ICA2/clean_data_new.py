@@ -42,9 +42,6 @@ df['Month'] = pd.to_datetime(df['date']).dt.to_period('M')
 to_leave = ["Country", "New cases", "New deaths", "date", "Month", "continent"]
 df = df[to_leave]  # Leaving only selected columns.
 
-df["Country"] = df["Country"].astype(str)
-df["continent"] = df["continent"].astype(str)
-
 
 print(df.head(10))  # We look at the first five entries using "head" method
 # print(df.info())

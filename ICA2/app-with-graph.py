@@ -130,8 +130,8 @@ app.layout = html.Div(children=[
             html.H3(children=total_deaths, style={
                     'fontWeight': 'bold'}),
             html.Label('Total deaths'),
-        ], style={"border": "1px solid", "border-color": "rgb(200, 200, 200)", "border-radius": "5px", 
-                "padding": "15px", "margin": "0px 20px 20px 0px"}),
+        ], style={"border": "1px solid", "border-color": "rgb(200, 200, 200)", "border-radius": "5px",
+                  "padding": "15px", "margin": "0px 20px 20px 0px"}),
 
     ], style={'display': 'flex', 'justify-content': 'start', 'width': '100%', 'flex-wrap': 'wrap'}),
 
@@ -174,7 +174,8 @@ def update_graph(cases_input, continents_input):
 
     fig = px.line(df[mask], x="date",
                   y=cases_input,
-                  color="Country", title=cases_input + " by day"
+                  color="Country",
+                  title=cases_input + " by day"
                   )
     return fig  # Fig goes into the output -> my_graph
 

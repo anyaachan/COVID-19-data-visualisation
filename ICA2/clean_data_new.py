@@ -1,5 +1,6 @@
 import pandas as pd
 import seaborn as sns
+import matplotlib as plt
 
 df = pd.read_csv("ICA2/resources/covid-data.csv")  # Creating a dataframe
 

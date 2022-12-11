@@ -3,18 +3,18 @@ import numpy as np
 import json
 import pandas as pd
 import dash_bootstrap_components as dbc
-import plotly.express as px  # Library that allows you to build graphs
+import plotly.express as px  
 import dash_mantine_components as dmc
 
 # Creating dataframe (incorporating data to the app)
 df = pd.read_csv("ICA2/resources/data-cleaned.csv")
 
 # Creating new variables and storing the sum of columns in them.
-total_cases = df["New cases"].sum()
-total_deaths = df["New deaths"].sum()
+total_cases = df["new_cases"].sum()
+total_deaths = df["new_deaths"].sum()
 
 # "Converting" cases count from linear to a logarithm scale.
-df['cases_color'] = df['New cases'].apply(np.log2)
+df['cases_color'] = df['new_cases'].apply(np.log2)
 max_log = int(df['cases_color'].max())
 
 # Creating variables in which we store values and ticks of color scale.
@@ -41,7 +41,7 @@ country_conversion_dict = {
 countries_geo = []
 
 # Creating database with sum of cases and deaths grouped by each month
-df2 = df.groupby(["Country", "Month"])['New cases', "New deaths"].sum()
+df2 = df.groupby(["country", "Month"])['new_cases', "new_deaths"].sum()
 df2 = df2.reset_index(drop=False)
 
 # Looping through the countries in json file
@@ -71,14 +71,14 @@ my_title = dcc.Markdown(
 # The figure is empty at the beginning because it is an interactive part of the application and the data will be passed from callback.
 my_graph = dcc.Graph(figure={})
 
-my_bar = dcc.Graph(figure=px.histogram(df, x="Month", y="New cases",
+my_bar = dcc.Graph(figure=px.histogram(df, x="Month", y="new_cases",
                    color="continent", title="Cases distribution by continent for each month"))
 
 
 chor = px.choropleth_mapbox(
     df2, geojson=geo_world_ok,
-    locations="Country",
-    color='New cases',
+    locations="country",
+    color='new_cases',
     animation_frame="Month",
     range_color=(0, 7000000),
     mapbox_style='open-street-map',
@@ -98,8 +98,8 @@ chor.update_layout(
 my_chor = dcc.Graph(figure=chor)
 
 # Making selection components
-dropdown_cases = dcc.Dropdown(options=["New cases", "New deaths"],
-                              value="New cases",  # Setting the initial value
+dropdown_cases = dcc.Dropdown(options=["new_cases", "new_deaths"],
+                              value="new_cases",  # Setting the initial value
                               clearable=False)  # Non-erasable
 
 multi_select = dmc.MultiSelect(data=["North America", "Africa", "South America", "Europe", "Asia", "Oceania"],
@@ -174,7 +174,7 @@ def update_graph(cases_input, continents_input):
 
     fig = px.line(df[mask], x="date",
                   y=cases_input,
-                  color="Country",
+                  color="country",
                   title=cases_input + " by day"
                   )
     return fig  # Fig goes into the output -> my_graph

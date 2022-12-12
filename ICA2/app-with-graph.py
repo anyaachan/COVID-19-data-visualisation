@@ -161,7 +161,6 @@ app.layout = html.Div(children=[
 # Building a callback
 # A callback decorator
 
-
 @app.callback(
     Output(my_graph, "figure"),
     Input(dropdown_cases, component_property="value"),

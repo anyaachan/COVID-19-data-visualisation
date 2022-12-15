@@ -119,22 +119,25 @@ dropdown_cases = dcc.Dropdown(options=["new_cases", "new_deaths"],
                               value="new_cases",  # Setting the initial value
                               clearable=False)  # Non-erasable
 
-continents_select = dmc.Select(data=["North America", "Africa", "South America", "Europe", "Asia", "Oceania"],
+
+continents_select = dmc.Select(data = ["North America", "Africa", "South America", "Europe", "Asia", "Oceania"],
                                searchable=True,
-                               value="Europe",
-                               nothingFound="No options found",
+                               value = "Europe",
+                               nothingFound = "No options found",
                                clearable=True)
 
-tabs = dmc.Tabs(id="tabs-graph",
-                active=2,
-                variant="outline",
-                children=[
-                    dmc.Tab(label="Country"),
-                    dmc.Tab(label="Continent"),
-                    dmc.Tab(label="World")
-                ],
-                )
-
+tabs = dmc.Tabs(
+            [
+                dmc.TabsList(
+                    [
+                        dmc.Tab("Country", value = "Country"),
+                        dmc.Tab("Continent", value = "Continent"),
+                        dmc.Tab("World", value = "World")
+                    ]
+                ),
+            ],
+            value = "Continent",
+        )
 
 # Building layout of the app
 app.layout = html.Div(children=[
@@ -191,29 +194,63 @@ app.layout = html.Div(children=[
 # Building a callback
 # A callback decorator
 
+@app.callback(
+    [Output(continents_select, component_property = "data"),
+    Output(continents_select, component_property = "value")],
+    Input(tabs, component_property = "value")
+)
+def update_select(tabs_input): 
+    if tabs_input == "Continent":
+        data = ["North America", "Africa", "South America", "Europe", "Asia", "Oceania"]
+        value = "Europe"
+        return data, value
+    if tabs_input == "Country":
+        data = df["country"].unique().tolist()
+        value = "Ukraine"
+        return data, value
+    else:
+        data = df["country"].unique().tolist()
+        value = "Ukraine"
+        return data, value
+
 
 @app.callback(
     Output(my_graph, "figure"),
     Input(dropdown_cases, component_property="value"),
     Input(continents_select, component_property="value"),
+    Input(tabs, component_property = "value")
 )
 # A callback function that should always go after a callback decorator
-def update_graph(cases_input, continents_input):
-    mask  = df_continent
-    mask = df_continent.loc[df_continent['continent'] == continents_input]
-    fig = px.line(mask, x="date",
-                  y=cases_input)
+def update_graph(cases_input, continents_input, tabs_input):
 
-    fig.update_traces(opacity=0.4)
-    help_fig = px.scatter(mask, x="date", y=cases_input,
-                          trendline="rolling", trendline_options=dict(window=14))
-    x_trend = help_fig["data"][1]['x']
-    y_trend = help_fig["data"][1]['y']
+    if tabs_input == "Continent": 
+        mask = df_continent
+        mask = df_continent.loc[df_continent['continent'] == continents_input]
+        fig = px.line(mask, x="date",
+                    y=cases_input)
 
-    fig.add_trace(go.Line(x=x_trend, y=y_trend))
-    fig.update_layout(hovermode="x unified")
+        fig.update_traces(opacity=0.4)
+        help_fig = px.scatter(mask, x="date", y=cases_input,
+                            trendline="rolling", trendline_options=dict(window=14))
+        x_trend = help_fig["data"][1]['x']
+        y_trend = help_fig["data"][1]['y']
 
-    return fig  # Fig goes into the output -> my_graph
+        fig.add_trace(go.Line(x=x_trend, y=y_trend))
+        fig.update_layout(hovermode="x unified")
+        fig.update_xaxes(title="Date")
+
+        if cases_input == "new_cases":
+            fig.update_yaxes(title="New cases count")
+        else: 
+            fig.update_yaxes(title="New deaths count")
+        
+        return fig  # Fig goes into the output -> my_graph
+    elif tabs_input == "Country":
+        print("AAAA")
+    else:
+        print("HUI")
+
+
 
 # Running the app
 if __name__ == "__main__":

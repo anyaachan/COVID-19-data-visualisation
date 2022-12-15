@@ -121,10 +121,10 @@ dropdown_cases = dcc.Dropdown(options=["new_cases", "new_deaths"],
 
 continents_select = dmc.Select(data=["North America", "Africa", "South America", "Europe", "Asia", "Oceania"],
                                searchable=True,
-                               value=["Europe"],
+                               value="Europe",
                                nothingFound="No options found",
                                clearable=True)
-                               
+
 tabs = dmc.Tabs(id="tabs-graph",
                 active=2,
                 variant="outline",
@@ -199,21 +199,21 @@ app.layout = html.Div(children=[
 )
 # A callback function that should always go after a callback decorator
 def update_graph(cases_input, continents_input):
+    mask  = df_continent
+    mask = df_continent.loc[df_continent['continent'] == continents_input]
+    fig = px.line(mask, x="date",
+                  y=cases_input)
 
-    mask = df["continent"].isin(continents_input)
-    fig = px.line(df_continent[mask], x="date",
-                  y=cases_input, color_discrete_sequence=["#ff97ff"])
-
-    fig.update_traces(opacity=0.3)
-    help_fig = px.scatter(df_continent[mask], x="date", y=cases_input,
+    fig.update_traces(opacity=0.4)
+    help_fig = px.scatter(mask, x="date", y=cases_input,
                           trendline="rolling", trendline_options=dict(window=14))
     x_trend = help_fig["data"][1]['x']
     y_trend = help_fig["data"][1]['y']
 
     fig.add_trace(go.Line(x=x_trend, y=y_trend))
+    fig.update_layout(hovermode="x unified")
 
     return fig  # Fig goes into the output -> my_graph
-
 
 # Running the app
 if __name__ == "__main__":

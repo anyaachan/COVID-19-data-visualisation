@@ -23,10 +23,18 @@ df_continent = df.copy()
 df_continent['date'] = pd.to_datetime(df_continent['date'])
 df_continent = df_continent.groupby(["continent", "date"])[
     ["new_cases", "new_deaths"]].sum().reset_index()
-
 df_continent.sort_values('date', inplace=True)
 
-print(df_continent.info())
+df_country = df.copy()
+df_country['date'] = pd.to_datetime(df_country['date'])
+df_country.sort_values('date', inplace=True)
+
+df_world = df.copy()
+df_world['date'] = pd.to_datetime(df_world['date'])
+df_world = df.groupby(["date"])[["new_cases", "new_deaths"]].sum().reset_index()
+df_world['date'] = pd.to_datetime(df_world['date'])
+df_world.sort_values('date', inplace=True)
+
 # Preparing a map for chloropleth graph
 # Loading json file
 world_path = "ICA2/resources/custom.geo.json"
@@ -206,11 +214,11 @@ def update_select(tabs_input):
         return data, value
     if tabs_input == "Country":
         data = df["country"].unique().tolist()
-        value = "Ukraine"
+        value = "Czechia"
         return data, value
     else:
-        data = df["country"].unique().tolist()
-        value = "Ukraine"
+        data = ["World"]
+        value = "World"
         return data, value
 
 
@@ -222,12 +230,37 @@ def update_select(tabs_input):
 )
 # A callback function that should always go after a callback decorator
 def update_graph(cases_input, continents_input, tabs_input):
-
+    
     if tabs_input == "Continent": 
+        
         mask = df_continent
         mask = df_continent.loc[df_continent['continent'] == continents_input]
         fig = px.line(mask, x="date",
                     y=cases_input)
+
+        fig.update_traces(opacity=0.4)
+        help_fig = px.scatter(mask, x="date", y=cases_input,
+                            trendline="rolling", trendline_options=dict(window=14))
+        x_trend = help_fig["data"][1]['x']
+        y_trend = help_fig["data"][1]['y']
+
+        fig.add_trace(go.Line(x=x_trend, y=y_trend))
+        fig.update_layout(hovermode="x unified")
+        fig.update_xaxes(title="Date")
+
+
+        if cases_input == "new_cases":
+            fig.update_yaxes(title="New cases count")
+        else: 
+            fig.update_yaxes(title="New deaths count")
+        
+        fig.update_traces(for_trace=1, name="My new trace label") #WHY IT IS NOT WORKING
+
+        return fig  # Fig goes into the output -> my_graph
+    elif tabs_input == "Country":
+        mask = df_country.loc[df_country['country'] == continents_input]
+        fig = px.line(mask, x="date",
+                    y = cases_input)
 
         fig.update_traces(opacity=0.4)
         help_fig = px.scatter(mask, x="date", y=cases_input,
@@ -245,10 +278,28 @@ def update_graph(cases_input, continents_input, tabs_input):
             fig.update_yaxes(title="New deaths count")
         
         return fig  # Fig goes into the output -> my_graph
-    elif tabs_input == "Country":
-        print("AAAA")
-    else:
-        print("HUI")
+    elif tabs_input == "World":
+
+        fig = px.line(df_world, x="date",
+                    y=cases_input)
+
+        fig.update_traces(opacity=0.4)
+        help_fig = px.scatter(df_world, x="date", y=cases_input,
+                            trendline="rolling", trendline_options=dict(window=14))
+        x_trend = help_fig["data"][1]['x']
+        y_trend = help_fig["data"][1]['y']
+
+        fig.add_trace(go.Line(x = x_trend, y = y_trend))
+        fig.update_layout(hovermode="x unified")
+        fig.update_xaxes(title="Date")
+
+
+        if cases_input == "new_cases":
+            fig.update_yaxes(title="New cases count, people")
+        else: 
+            fig.update_yaxes(title="New deaths count, people")
+        
+        return fig  # Fig goes into the output -> my_graph
 
 
 

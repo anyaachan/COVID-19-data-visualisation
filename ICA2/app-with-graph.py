@@ -6,7 +6,10 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import dash_mantine_components as dmc
 import plotly.graph_objects as go
+import locale
 
+# Setting locale in order to separate thousands using comma
+locale.setlocale(locale.LC_NUMERIC, 'en_US')
 
 # Creating dataframe (incorporating data to the app)
 df = pd.read_csv("ICA2/resources/data-cleaned.csv")
@@ -67,7 +70,7 @@ max_val = int(max_log) + 1
 
 # Creating variables in which we store values and ticks of color scale.
 values = [i for i in range(max_val)]
-ticks = [10**i for i in values]
+ticks = [locale.format("%d", 10**i, grouping= True) for i in values]
 
 # Looping through the countries in json file
 for country in geo_world['features']:
@@ -91,7 +94,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.LUX])
 
 # Creating a title for the map
 my_title = dcc.Markdown(
-    children="# App that analyses COVID-19 situation")  # Making the title
+    children="# Covid-19 Pandemic Analysis")  # Making the title
 
 # Making graphs components
 # The figure is empty at the beginning because it is an interactive part of the application and the data will be passed from callback.
@@ -99,31 +102,33 @@ my_graph = dcc.Graph(figure={})
 my_bar = dcc.Graph(figure=px.histogram(df, x="Month", y="new_cases",
                    color="continent", title="Cases distribution by continent for each month"))
 
+chor = px.choropleth_mapbox(
+df2, geojson = geo_world_ok,
+locations="country",
+animation_frame="Month",
+color="cases_color",
+range_color=(0, max_log),
+mapbox_style='open-street-map',
+zoom=0.5,
+center={'lat': 19, 'lon': 11},
+opacity=0.6
+)
 
-# chor = px.choropleth_mapbox(
-#     df2, geojson=geo_world_ok,
-#     locations="country",
-#     animation_frame="Month",
-#     color="cases_color",
-#     range_color=(0, max_log),
-#     mapbox_style='open-street-map',
-#     zoom=0.5,
-#     center={'lat': 19, 'lon': 11},
-#     opacity=0.6
-# )
+chor.update_layout(
+height=600,
+coloraxis_colorbar={
+    'title': 'Confirmed cases, people',
+    'tickvals': values,
+    'ticktext': ticks,
+    'ticks': "outside"
+}
+)
 
-# chor.update_layout(
-#     height=600,
-#     coloraxis_colorbar={
-#         'title': 'Confirmed people',
-#         'tickvals': values,
-#         'ticks': "outside"
-#     }
-# )
-my_chor = dcc.Graph(figure={})
+my_chor = dcc.Graph(figure = chor)
 
 # Making selection components
-dropdown_cases = dcc.Dropdown(options=["new_cases", "new_deaths"],
+dropdown_cases = dcc.Dropdown(options=[{"value": "new_cases", "label": "New Cases"}, 
+                                        {"value": "new_deaths", "label": "New Deaths"}],
                               value="new_cases",  # Setting the initial value
                               clearable=False)  # Non-erasable
 
@@ -159,14 +164,14 @@ app.layout = html.Div(children=[
     html.Div(children=[
 
         html.Div(children=[
-            html.H3(children=total_cases, style={
+            html.H3(children=locale.format("%d", total_cases, grouping= True),  style={
                     'fontWeight': 'bold'}),
             html.Label('Total cases'),
         ], style={"border": "1px solid", "border-color": "rgb(200, 200, 200)", "border-radius": "5px",
                   "padding": "15px", "margin": "0px 20px 20px 0px"}),
 
         html.Div(children=[
-            html.H3(children=total_deaths, style={
+            html.H3(children=locale.format("%d", total_deaths, grouping= True), style={
                     'fontWeight': 'bold'}),
             html.Label('Total deaths'),
         ], style={"border": "1px solid", "border-color": "rgb(200, 200, 200)", "border-radius": "5px",
@@ -230,7 +235,7 @@ def update_select(tabs_input):
 )
 # A callback function that should always go after a callback decorator
 def update_graph(cases_input, continents_input, tabs_input):
-    
+
     if tabs_input == "Continent": 
         
         mask = df_continent
@@ -244,19 +249,17 @@ def update_graph(cases_input, continents_input, tabs_input):
         x_trend = help_fig["data"][1]['x']
         y_trend = help_fig["data"][1]['y']
 
-        fig.add_trace(go.Line(x=x_trend, y=y_trend))
+        fig.add_trace(go.Line(x=x_trend, y=y_trend, name = "14-day average"))
         fig.update_layout(hovermode="x unified")
         fig.update_xaxes(title="Date")
 
-
         if cases_input == "new_cases":
-            fig.update_yaxes(title="New cases count")
+            fig.update_yaxes(title="New cases count, people")
         else: 
-            fig.update_yaxes(title="New deaths count")
+            fig.update_yaxes(title="New deaths count, people")
         
-        fig.update_traces(for_trace=1, name="My new trace label") #WHY IT IS NOT WORKING
+        return fig # Fig goes into the output -> my_graph
 
-        return fig  # Fig goes into the output -> my_graph
     elif tabs_input == "Country":
         mask = df_country.loc[df_country['country'] == continents_input]
         fig = px.line(mask, x="date",
@@ -268,16 +271,17 @@ def update_graph(cases_input, continents_input, tabs_input):
         x_trend = help_fig["data"][1]['x']
         y_trend = help_fig["data"][1]['y']
 
-        fig.add_trace(go.Line(x=x_trend, y=y_trend))
+        fig.add_trace(go.Line(x=x_trend, y=y_trend, name = "14-day average"))
         fig.update_layout(hovermode="x unified")
         fig.update_xaxes(title="Date")
 
         if cases_input == "new_cases":
-            fig.update_yaxes(title="New cases count")
+            fig.update_yaxes(title="New cases count, people")
         else: 
-            fig.update_yaxes(title="New deaths count")
+            fig.update_yaxes(title="New deaths count, people")
         
         return fig  # Fig goes into the output -> my_graph
+
     elif tabs_input == "World":
 
         fig = px.line(df_world, x="date",
@@ -289,7 +293,7 @@ def update_graph(cases_input, continents_input, tabs_input):
         x_trend = help_fig["data"][1]['x']
         y_trend = help_fig["data"][1]['y']
 
-        fig.add_trace(go.Line(x = x_trend, y = y_trend))
+        fig.add_trace(go.Line(x = x_trend, y = y_trend, name = "14-day average"))
         fig.update_layout(hovermode="x unified")
         fig.update_xaxes(title="Date")
 

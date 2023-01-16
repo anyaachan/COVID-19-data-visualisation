@@ -8,6 +8,7 @@ import dash_mantine_components as dmc
 import plotly.graph_objects as go
 import locale
 
+# Preparation of the data
 # Setting numeric format to the US format in order to separate thousands using comma.
 locale.setlocale(locale.LC_NUMERIC, 'en_US')
 
@@ -20,19 +21,24 @@ total_deaths = df["new_deaths"].sum()
 
 # Creating a dataframe for "continent" tab
 df_continent = df.copy()
+# Converting the date column to the datetime format
 df_continent['date'] = pd.to_datetime(df_continent['date'])
+# Grouping the data in the dataset to obtain the sum of daily new cases and deaths for each continent.
 df_continent = df_continent.groupby(["continent", "date"])[
     ["new_cases", "new_deaths"]].sum().reset_index()
 df_continent.sort_values('date', inplace=True)
 
 # Creating a dataframe for "country" tab
 df_country = df.copy()
+# Converting the date column to the datetime format
 df_country['date'] = pd.to_datetime(df_country['date'])
 df_country.sort_values('date', inplace=True)
 
 # Creating a dataframe for "world" tab
 df_world = df.copy()
+# Converting the date column to the datetime format
 df_world['date'] = pd.to_datetime(df_world['date'])
+# Grouping the data in the dataset to obtain the sum of daily new cases and deaths in the world.
 df_world = df.groupby(["date"])[
     ["new_cases", "new_deaths"]].sum().reset_index()
 df_world['date'] = pd.to_datetime(df_world['date'])
@@ -57,7 +63,7 @@ country_conversion_dict = {
 # Defining an empty list in which we will store the informattion about the countries.
 countries_geo = []
 
-# Creating database with sum of cases and deaths grouped by each month
+# Creating a dataframe with sum of cases and deaths grouped by each month
 df2 = df.copy()
 df2 = df.groupby(["country", "Month"])['new_cases', "new_deaths"].sum()
 # Resetting the index in order for it to be sequential.
@@ -66,7 +72,7 @@ df2 = df2.reset_index(drop=False)
 # "Converting" cases color count from linear to a logarithmic scale.
 df2['cases_color'] = df2['new_cases'].apply(np.log10)
 
-# Creating a variable and storing a maximum value of cases in it. It will help us with the
+# Creating a variable and storing a maximum value of cases in it. It will help us with the color scale in choropleth map
 max_log = df2['cases_color'].max()
 max_val = int(max_log) + 1
 
@@ -167,7 +173,6 @@ app.layout = html.Div(children=[
     ], style={'textAlign': 'center'}),
 
     html.Div(children=[
-
         html.Div(children=[
             html.H3(children=locale.format("%d", total_cases, grouping=True),  style={
                     'fontWeight': 'bold'}),
@@ -181,7 +186,6 @@ app.layout = html.Div(children=[
             html.Label('Total deaths'),
         ], style={"border": "1px solid", "border-color": "rgb(200, 200, 200)", "border-radius": "5px",
                   "padding": "15px", "margin": "0px 20px 20px 0px"}),
-
     ], style={'display': 'flex', 'justify-content': 'start', 'width': '100%', 'flex-wrap': 'wrap'}),
 
 
@@ -211,7 +215,6 @@ app.layout = html.Div(children=[
 
 # Building the first callback which will pass the dropdown data to the second callback
 
-
 @app.callback(
     [Output(continents_select, component_property="data"),
      Output(continents_select, component_property="value")],
@@ -233,7 +236,6 @@ def update_select(tabs_input):
         return data, value
 
 # The second callback in which we'll recieve the information from the first callback and make graphs depending what we'll recieve.
-
 
 @app.callback(
     Output(my_graph, "figure"),
@@ -290,7 +292,7 @@ def update_graph(cases_input, continents_input, tabs_input):
         update_traces(fig, df_world)
         update_title(fig)
 
-        return fig  # Fig goes into the output -> my_graph
+        return fig  
 
 
 # Running the app

@@ -260,7 +260,7 @@ def update_graph(cases_input, continents_input, tabs_input):
         x_trend = help_fig["data"][1]['x']
         y_trend = help_fig["data"][1]['y']
 
-        fig.add_trace(go.Line(x=x_trend, y=y_trend, name="14-day average"))
+        fig.add_trace(go.Line(x=x_trend, y=y_trend, name="14-day average", connectgaps=True))
         fig.update_layout(hovermode="x unified")
         fig.update_xaxes(title="Date")
 
